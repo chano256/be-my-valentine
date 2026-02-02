@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For My Valentine ❤️</title>
+    <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Handles mobile browser bars better */
+            min-height: 100dvh; /* Modern mobile fix */
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            font-family: 'Indie Flower', cursive;
+            overflow: hidden; 
+            text-align: center;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            padding: 20px;
+            /* Ensure container doesn't hit the very bottom (Tiiny footer space) */
+            padding-bottom: 60px; 
+        }
+
+        /* Default styling (Desktop) */
+        h1 {
+            font-size: 2.5rem;
+            color: #d32f2f;
+            margin: 10px 0 20px 0;
+            line-height: 1.2;
+        }
+
+        .gif-container img {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 10px;
+            position: relative;
+            width: 100%;
+            min-height: 60px; /* Space for button movement */
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            font-family: 'Indie Flower', cursive;
+            font-weight: bold;
+            -webkit-tap-highlight-color: transparent;
+            white-space: nowrap; /* Stops text wrapping inside button */
+        }
+
+        #yesBtn {
+            background-color: #ff4081;
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 64, 129, 0.4);
+            z-index: 20;
+        }
+
+        #noBtn {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        /* Success Message */
+        #success-message {
+            display: none;
+        }
+        
+        /* Floating Hearts Background */
+        .heart {
+            position: absolute;
+            color: #ffcdd2;
+            animation: float 6s linear infinite;
+            z-index: 1;
+            opacity: 0.6;
+            pointer-events: none; /* Let clicks pass through hearts */
+        }
+
+        @keyframes float {
+            0% { transform: translateY(100vh) scale(0.5); opacity: 0; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+        }
+
+        /* --- MOBILE OPTIMIZATION (iPhone X and similar) --- */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8rem; /* Smaller text */
+                margin-bottom: 15px;
+            }
+            
+            .gif-container img {
+                max-width: 200px; /* Smaller Bear */
+                max-height: 180px;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 1rem; /* Smaller buttons */
+            }
+
+            .container {
+                /* Push content slightly up to avoid Tiiny footer */
+                margin-top: -40px; 
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="hearts-container"></div>
+
+    <div class="container">
+        <div id="question-screen">
+            <h1>Valine ❤️ Sammantha Wejuli, Will you be my Valentine? 🌹</h1>
+            <div class="gif-container">
+                <img src="https://media.tenor.com/gUiu1zyxfzYAAAAi/bear-kiss-bear-kisses.gif" alt="Cute Bear">
+            </div>
+            <div class="buttons">
+                <button id="yesBtn" class="btn" onclick="acceptLove()">Yes!</button>
+                <button id="noBtn" class="btn" onmouseover="dodge()" onclick="dodge()">No</button>
+            </div>
+        </div>
+
+        <div id="success-message">
+            <div class="gif-container">
+                <img src="https://media.tenor.com/bXjXzW9O_hQAAAAi/cat-hearts.gif" alt="Happy Cat">
+            </div>
+            <h1>YAY! I Knew It! ❤️</h1>
+            <p style="font-size: 1.2rem; color: #555; padding: 0 10px;">You're my Valentine! 😉</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const questionScreen = document.getElementById('question-screen');
+        const successMessage = document.getElementById('success-message');
+        
+        // Shorter text for mobile screens so buttons don't get too wide
+        const noTexts = ["Sure?", "Really?", "Think again!", "Last chance!", "Don't!", "Regret this!", "Please?", "Certain?", "Mistake!", "Have a heart!", "So cold!", "Change mind?"];
+
+        let yesScale = 1; 
+
+        function dodge() {
+            // 1. Make Yes button bigger
+            yesScale += 0.15;
+            yesBtn.style.transform = `scale(${yesScale})`;
+
+            // 2. Move No Button (Smart Mobile Logic)
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            const btnWidth = noBtn.offsetWidth;
+            const btnHeight = noBtn.offsetHeight;
+
+            // Safe Zone Calculations (Keep away from edges and Tiiny footer)
+            // Left/Right padding: 20px
+            const minX = 20;
+            const maxX = windowWidth - btnWidth - 20;
+            
+            // Top/Bottom: Keep in the middle 50% of screen to avoid header/footer
+            const minY = windowHeight * 0.25;
+            const maxY = windowHeight * 0.60; 
+
+            const randomX = Math.random() * (maxX - minX) + minX;
+            const randomY = Math.random() * (maxY - minY) + minY;
+
+            noBtn.style.position = 'fixed'; 
+            noBtn.style.left = randomX + 'px';
+            noBtn.style.top = randomY + 'px';
+
+            // 3. Change Text
+            const randomText = noTexts[Math.floor(Math.random() * noTexts.length)];
+            noBtn.innerText = randomText;
+        }
+
+        function acceptLove() {
+            questionScreen.style.display = 'none';
+            successMessage.style.display = 'block';
+            fireConfetti();
+        }
+
+        function fireConfetti() {
+            var count = 200;
+            var defaults = { origin: { y: 0.7 } };
+            function fire(particleRatio, opts) {
+                confetti(Object.assign({}, defaults, opts, {
+                    particleCount: Math.floor(count * particleRatio)
+                }));
+            }
+            fire(0.25, { spread: 26, startVelocity: 55 });
+            fire(0.2, { spread: 60 });
+            fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+            fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+            fire(0.1, { spread: 120, startVelocity: 45 });
+        }
+
+        function createHearts() {
+            const container = document.getElementById('hearts-container');
+            for(let i=0; i < 15; i++) {
+                const heart = document.createElement('div');
+                heart.classList.add('heart');
+                heart.innerHTML = '❤️';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.animationDuration = Math.random() * 3 + 4 + 's'; 
+                heart.style.fontSize = Math.random() * 20 + 10 + 'px';
+                container.appendChild(heart);
+            }
+        }
+        createHearts();
+    </script>
+</body>
+</html>
